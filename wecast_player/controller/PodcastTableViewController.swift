@@ -25,9 +25,10 @@ class PodcastTableViewController: UITableViewController {
         getFeedRSS()
     }
     
+    
     //MARK:- Private functions
     
-    fileprivate func populateListPosts(_ feed: RSSFeed) {
+    func populateListPosts(_ feed: RSSFeed) {
         for item in feed.items! {
             if let post = Post(item: item) {
                 self.posts.append(post)
@@ -39,7 +40,7 @@ class PodcastTableViewController: UITableViewController {
         self.tableView.reloadData()
     }
     
-    fileprivate func getFeedRSS() {
+    func getFeedRSS() {
         let parser = FeedParser(URL: feedURL)
         parser.parseAsync(queue: DispatchQueue.global(qos: .userInitiated)) { (result) in
             DispatchQueue.main.async {
@@ -56,6 +57,7 @@ class PodcastTableViewController: UITableViewController {
         }
     }
     
+    
     //MARK:- TableViewDelegate
     
     override func numberOfSections(in tableView: UITableView) -> Int {
@@ -71,18 +73,20 @@ class PodcastTableViewController: UITableViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: "PostCell") as! PostCell
         cell.title.text = post.title
         cell.subtitle.text = post.subTitle
-        cell.date.text = post.date.description
         cell.thumb.kf.setImage(with: URL(string: thumbFeedURL))
         return cell
     }
+    
     
     //MARK:- Navigation
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "postSegue", let itemRow = self.tableView.indexPathForSelectedRow?.row {
-            let post = posts[itemRow]
-            let viewController = segue.destination
-            viewController.title = post.title
+            let playerViewController = segue.destination as! PlayerViewController
+            playerViewController.currentEpisodeIndex = itemRow
+            playerViewController.posts = posts
+            playerViewController.urlImage = self.thumbFeedURL
+            playerViewController.episodeTitle = posts[itemRow].title
         }
     }
     

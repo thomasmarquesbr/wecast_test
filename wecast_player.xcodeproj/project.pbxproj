@@ -18,6 +18,7 @@
 		E92310612205344700485234 /* PodcastTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92310602205344700485234 /* PodcastTableViewController.swift */; };
 		E92310642205350800485234 /* Post.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92310632205350800485234 /* Post.swift */; };
 		E92310672205389B00485234 /* PostCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92310662205389B00485234 /* PostCell.swift */; };
+		E923106B2205E83800485234 /* PlayerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E923106A2205E83800485234 /* PlayerViewController.swift */; };
 		FF52E9A2B5E90A2DFC87E15D /* Pods_wecast_player.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AAB22A4E2C89E99912F5270B /* Pods_wecast_player.framework */; };
 /* End PBXBuildFile section */
 
@@ -63,6 +64,7 @@
 		E92310602205344700485234 /* PodcastTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastTableViewController.swift; sourceTree = "<group>"; };
 		E92310632205350800485234 /* Post.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Post.swift; sourceTree = "<group>"; };
 		E92310662205389B00485234 /* PostCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostCell.swift; sourceTree = "<group>"; };
+		E923106A2205E83800485234 /* PlayerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -190,6 +192,7 @@
 			isa = PBXGroup;
 			children = (
 				E92310602205344700485234 /* PodcastTableViewController.swift */,
+				E923106A2205E83800485234 /* PlayerViewController.swift */,
 			);
 			path = controller;
 			sourceTree = "<group>";
@@ -275,6 +278,11 @@
 				TargetAttributes = {
 					E923102A2204FE5D00485234 = {
 						CreatedOnToolsVersion = 10.1;
+						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+						};
 					};
 					E923103E2204FE5E00485234 = {
 						CreatedOnToolsVersion = 10.1;
@@ -435,6 +443,7 @@
 				E923102F2204FE5D00485234 /* AppDelegate.swift in Sources */,
 				E92310642205350800485234 /* Post.swift in Sources */,
 				E92310672205389B00485234 /* PostCell.swift in Sources */,
+				E923106B2205E83800485234 /* PlayerViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
