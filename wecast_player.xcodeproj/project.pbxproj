@@ -19,6 +19,8 @@
 		E92310642205350800485234 /* Post.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92310632205350800485234 /* Post.swift */; };
 		E92310672205389B00485234 /* PostCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92310662205389B00485234 /* PostCell.swift */; };
 		E923106B2205E83800485234 /* PlayerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E923106A2205E83800485234 /* PlayerViewController.swift */; };
+		E9F540402207634E005F10AE /* UIButtonExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9F5403F2207634E005F10AE /* UIButtonExtension.swift */; };
+		E9F540422207641D005F10AE /* AudioPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9F540412207641D005F10AE /* AudioPlayerController.swift */; };
 		FF52E9A2B5E90A2DFC87E15D /* Pods_wecast_player.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AAB22A4E2C89E99912F5270B /* Pods_wecast_player.framework */; };
 /* End PBXBuildFile section */
 
@@ -65,6 +67,8 @@
 		E92310632205350800485234 /* Post.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Post.swift; sourceTree = "<group>"; };
 		E92310662205389B00485234 /* PostCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostCell.swift; sourceTree = "<group>"; };
 		E923106A2205E83800485234 /* PlayerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewController.swift; sourceTree = "<group>"; };
+		E9F5403F2207634E005F10AE /* UIButtonExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIButtonExtension.swift; sourceTree = "<group>"; };
+		E9F540412207641D005F10AE /* AudioPlayerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayerController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -143,6 +147,7 @@
 		E923102D2204FE5D00485234 /* wecast_player */ = {
 			isa = PBXGroup;
 			children = (
+				E9F5403E2207632A005F10AE /* extension */,
 				E92310692205681100485234 /* view */,
 				E923106822054A7E00485234 /* controller */,
 				E92310652205387E00485234 /* cell */,
@@ -193,6 +198,7 @@
 			children = (
 				E92310602205344700485234 /* PodcastTableViewController.swift */,
 				E923106A2205E83800485234 /* PlayerViewController.swift */,
+				E9F540412207641D005F10AE /* AudioPlayerController.swift */,
 			);
 			path = controller;
 			sourceTree = "<group>";
@@ -204,6 +210,14 @@
 				E92310372204FE5E00485234 /* LaunchScreen.storyboard */,
 			);
 			path = view;
+			sourceTree = "<group>";
+		};
+		E9F5403E2207632A005F10AE /* extension */ = {
+			isa = PBXGroup;
+			children = (
+				E9F5403F2207634E005F10AE /* UIButtonExtension.swift */,
+			);
+			path = extension;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -446,6 +460,8 @@
 				E92310642205350800485234 /* Post.swift in Sources */,
 				E92310672205389B00485234 /* PostCell.swift in Sources */,
 				E923106B2205E83800485234 /* PlayerViewController.swift in Sources */,
+				E9F540422207641D005F10AE /* AudioPlayerController.swift in Sources */,
+				E9F540402207634E005F10AE /* UIButtonExtension.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

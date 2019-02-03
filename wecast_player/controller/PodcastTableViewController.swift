@@ -14,7 +14,8 @@ import NVActivityIndicatorView
 
 class PodcastTableViewController: UITableViewController {
     
-    var player: AVAudioPlayer?
+//    var player: AVAudioPlayer?
+    var audioPlayerController = AudioPlayerController()
     let feedURL = URL(string: "http://feeds.feedburner.com/podcastmrg")!
     let dateFormatter = DateFormatter()
     var thumbFeedURL = ""
@@ -37,6 +38,11 @@ class PodcastTableViewController: UITableViewController {
     fileprivate func populateListPosts(_ feed: RSSFeed) {
         for item in feed.items! {
             if let post = Post(item: item) {
+                let localPathUrl = getLocalPath(post.urlMedia)
+                if audioAlreadyDownloaded(localPathUrl) {
+                    post.pathMedia = localPathUrl
+                    post.downloadStatus = .completed
+                }
                 self.posts.append(post)
             }
         }
@@ -77,20 +83,9 @@ class PodcastTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let post = posts[indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: "PostCell") as! PostCell
-        cell.title.text = post.title
-        cell.subtitle.text = post.subTitle
-        let isAlreadyDownload = audioAlreadyDownloaded(getLocalPath(post.urlMedia))
-        let img: String
-        if isAlreadyDownload {
-            posts[indexPath.row].pathMedia = getLocalPath(post.urlMedia)
-            img = "play"
-        } else {
-            img = "download"
-        }
-        cell.downloadButton.setImage(UIImage(named: img), for: .normal)
+        cell.config(post, thumbUrl: thumbFeedURL)
         cell.downloadButton.tag = indexPath.row
         cell.downloadButton.addTarget(self, action: #selector(tapDownloadOrPlay(sender:)), for: .touchUpInside)
-        cell.thumb.kf.setImage(with: URL(string: thumbFeedURL))
         return cell
     }
     
@@ -119,9 +114,8 @@ class PodcastTableViewController: UITableViewController {
         URLSession.shared.downloadTask(with: post.urlMedia, completionHandler: { (location, response, error) -> Void in
             guard let location = location, error == nil else { return }
             do {
-                // after downloading your file you need to move it to your destination url
                 try FileManager.default.moveItem(at: location, to: localPathUrl)
-//                self.play(localPathUrl)
+                post.pathMedia = localPathUrl
                 completion(true)
             } catch let error as NSError {
                 print(error.localizedDescription)
@@ -135,80 +129,25 @@ class PodcastTableViewController: UITableViewController {
     }
     
     @objc func tapDownloadOrPlay(sender: UIButton)  {
-        let index = sender.tag
-        let post = posts[index]
-        print(post.title)
+        let row = sender.tag
+        let indexPath = IndexPath(item: row, section: 0)
+        let post = posts[row]
         let localPathUrl = getLocalPath(post.urlMedia)
         if audioAlreadyDownloaded(localPathUrl) {
-            play(localPathUrl, button: sender)
+            audioPlayerController.play(posts, indexPath) { (rowsToReload) in
+                print(rowsToReload.count)
+                self.tableView.reloadRows(at: rowsToReload, with: .none)
+            }
         } else {
-            sender.loadingIndicator(true)
+            post.downloadStatus = .downloading
+            tableView.reloadRows(at: [indexPath], with: .none)
             executeDownload(post, localPathUrl, completion: { (success) in
                 DispatchQueue.main.async {
-                    sender.loadingIndicator(false)
-                    let button = (success) ? "play" : "download"
-                    sender.setImage(UIImage(named: button), for: .normal)
+                    post.downloadStatus = (success) ? .completed : .none
+                    self.tableView.reloadRows(at: [indexPath], with: .none)
                 }
             })
         }
     }
     
-    var lastButtonClicked: UIButton?
-    
-    fileprivate func play(_ localPathUrl: URL, button: UIButton) {
-        if let player = player, player.url?.absoluteURL == localPathUrl.absoluteURL {
-            if player.isPlaying {
-                player.pause()
-                button.setImage(UIImage(named: "play"), for: .normal)
-            } else {
-                player.play()
-                lastButtonClicked?.setImage(UIImage(named: "play"), for: .normal)
-                button.setImage(UIImage(named: "pause"), for: .normal)
-                lastButtonClicked = button
-            }
-        } else {
-            do {
-                player = try AVAudioPlayer(contentsOf: localPathUrl)
-                player?.prepareToPlay()
-                player?.volume = 1.0
-                player?.play()
-                lastButtonClicked?.setImage(UIImage(named: "play"), for: .normal)
-                button.setImage(UIImage(named: "pause"), for: .normal)
-                lastButtonClicked = button
-            } catch let error as NSError {
-                print("playing error: \(error.localizedDescription)")
-            } catch {
-                print("AVAudioPlayer init failed")
-            }
-        }
-    }
-    
-}
-
-extension UIButton {
-    func loadingIndicator(_ show: Bool) {
-        let tag = 808404
-        if show {
-            self.isEnabled = false
-            self.alpha = 0.5
-//            let indicator = UIActivityIndicatorView()
-            self.setImage(nil, for: .normal)
-            let color = UIColor(red: CGFloat(65/255.0), green: CGFloat(69/255.0), blue: CGFloat(70/255.0), alpha: 1)
-            let indicator = NVActivityIndicatorView(frame: self.frame, type: NVActivityIndicatorType.circleStrokeSpin, color: color, padding: 3.0)
-            let buttonHeight = self.bounds.size.height
-            let buttonWidth = self.bounds.size.width
-            indicator.center = CGPoint(x: buttonWidth/2, y: buttonHeight/2)
-            indicator.tag = tag
-            self.addSubview(indicator)
-            indicator.startAnimating()
-        } else {
-            self.isEnabled = true
-            self.alpha = 1.0
-//            if let indicator = self.viewWithTag(tag) as? UIActivityIndicatorView {
-            if let indicator = self.viewWithTag(tag) as? NVActivityIndicatorView {
-                indicator.stopAnimating()
-                indicator.removeFromSuperview()
-            }
-        }
-    }
 }
