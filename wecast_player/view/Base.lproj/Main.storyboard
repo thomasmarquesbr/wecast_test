@@ -27,7 +27,7 @@
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" distribution="fillEqually" alignment="top" spacing="5" translatesAutoresizingMaskIntoConstraints="NO" id="cq6-t4-4q9">
-                                            <rect key="frame" x="83" y="16.000000000000007" width="252" height="117.66666666666669"/>
+                                            <rect key="frame" x="83" y="16.000000000000007" width="238" height="117.66666666666669"/>
                                             <subviews>
                                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" text="title" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="uiW-bg-P06">
                                                     <rect key="frame" x="0.0" y="0.0" width="28.666666666666668" height="56.333333333333336"/>
@@ -50,17 +50,28 @@
                                                 <constraint firstAttribute="height" constant="55" id="r8X-Nf-baZ"/>
                                             </constraints>
                                         </imageView>
+                                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5ma-G7-4DX">
+                                            <rect key="frame" x="333" y="60" width="30" height="30"/>
+                                            <constraints>
+                                                <constraint firstAttribute="width" constant="30" id="pPs-CX-kmi"/>
+                                                <constraint firstAttribute="height" constant="30" id="wom-rm-TkK"/>
+                                            </constraints>
+                                            <state key="normal" image="download"/>
+                                        </button>
                                     </subviews>
                                     <constraints>
                                         <constraint firstItem="cq6-t4-4q9" firstAttribute="leading" secondItem="MjY-AI-IMd" secondAttribute="trailing" constant="12" id="8nH-zp-6NZ"/>
+                                        <constraint firstItem="5ma-G7-4DX" firstAttribute="centerY" secondItem="sAK-bT-ckS" secondAttribute="centerY" id="CON-ud-IF8"/>
                                         <constraint firstItem="MjY-AI-IMd" firstAttribute="centerY" secondItem="sAK-bT-ckS" secondAttribute="centerY" id="JTg-5c-Xel"/>
+                                        <constraint firstItem="5ma-G7-4DX" firstAttribute="leading" secondItem="cq6-t4-4q9" secondAttribute="trailing" constant="12" id="JbP-Df-jlt"/>
                                         <constraint firstItem="MjY-AI-IMd" firstAttribute="leading" secondItem="sAK-bT-ckS" secondAttribute="leadingMargin" id="aYs-wR-NlB"/>
                                         <constraint firstItem="cq6-t4-4q9" firstAttribute="top" secondItem="sAK-bT-ckS" secondAttribute="topMargin" constant="5" id="bGL-Gh-J8u"/>
+                                        <constraint firstAttribute="trailing" secondItem="5ma-G7-4DX" secondAttribute="trailing" constant="12" id="idC-kk-3So"/>
                                         <constraint firstItem="cq6-t4-4q9" firstAttribute="centerY" secondItem="sAK-bT-ckS" secondAttribute="centerY" id="kqY-ED-Nnu"/>
-                                        <constraint firstAttribute="trailingMargin" secondItem="cq6-t4-4q9" secondAttribute="trailing" constant="24" id="sVO-4c-Tb0"/>
                                     </constraints>
                                 </tableViewCellContentView>
                                 <connections>
+                                    <outlet property="downloadButton" destination="5ma-G7-4DX" id="49L-WN-FMw"/>
                                     <outlet property="subtitle" destination="2ID-7M-KzH" id="40k-IU-QJQ"/>
                                     <outlet property="thumb" destination="MjY-AI-IMd" id="MHm-Lr-Rwx"/>
                                     <outlet property="title" destination="uiW-bg-P06" id="9st-XH-68t"/>
@@ -182,6 +193,7 @@
         </scene>
     </scenes>
     <resources>
+        <image name="download" width="90" height="90"/>
         <image name="fast-foward" width="90" height="90"/>
         <image name="play" width="90" height="90"/>
         <image name="rewind" width="90" height="90"/>

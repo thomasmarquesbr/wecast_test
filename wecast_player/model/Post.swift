@@ -16,6 +16,7 @@ class Post {
     var description: String
     var date: Date
     var urlMedia: URL
+    var pathMedia: URL?
     
     init?(item: RSSFeedItem) {
         guard let title = item.title else { return nil }

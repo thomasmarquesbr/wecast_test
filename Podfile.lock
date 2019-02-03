@@ -1,20 +1,24 @@
 PODS:
   - FeedKit (8.0.0)
   - Kingfisher (5.1.0)
+  - NVActivityIndicatorView/AppExtension (4.6.1)
 
 DEPENDENCIES:
   - FeedKit (~> 8.0)
   - Kingfisher (~> 5.0)
+  - NVActivityIndicatorView/AppExtension
 
 SPEC REPOS:
   https://github.com/cocoapods/specs.git:
     - FeedKit
     - Kingfisher
+    - NVActivityIndicatorView
 
 SPEC CHECKSUMS:
   FeedKit: 4a78f07adf7f0a224b904014678f1de82a7ffc21
   Kingfisher: fcec238063d17404fca89bf0a850583211c4cbf6
+  NVActivityIndicatorView: 4ca19fccc84595a78957336a086d00a49be6ce61
 
-PODFILE CHECKSUM: 96ea674fbb59955deaeb87137dbc5dfc98004832
+PODFILE CHECKSUM: dcda65f872cf9665357c0812597ffaca12c03259
 
 COCOAPODS: 1.5.3
