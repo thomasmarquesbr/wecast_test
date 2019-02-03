@@ -15,6 +15,7 @@ import NVActivityIndicatorView
 class PodcastTableViewController: UITableViewController {
     
 //    var player: AVAudioPlayer?
+    var storageController = StorageController()
     var audioPlayerController = AudioPlayerController()
     let feedURL = URL(string: "http://feeds.feedburner.com/podcastmrg")!
     let dateFormatter = DateFormatter()
@@ -38,8 +39,8 @@ class PodcastTableViewController: UITableViewController {
     fileprivate func populateListPosts(_ feed: RSSFeed) {
         for item in feed.items! {
             if let post = Post(item: item) {
-                let localPathUrl = getLocalPath(post.urlMedia)
-                if audioAlreadyDownloaded(localPathUrl) {
+                let localPathUrl = storageController.getLocalPath(post.urlMedia)
+                if storageController.audioAlreadyDownloaded(localPathUrl) {
                     post.pathMedia = localPathUrl
                     post.downloadStatus = .completed
                 }
@@ -103,37 +104,14 @@ class PodcastTableViewController: UITableViewController {
     }
     
     
-    //MARK:- Download functions
-    
-    fileprivate func getLocalPath(_ url: URL) -> URL {
-        let documentsDirectoryURL =  FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        return documentsDirectoryURL.appendingPathComponent(url.lastPathComponent)
-    }
-    
-    fileprivate func executeDownload(_ post: Post, _ localPathUrl: URL, completion: @escaping(Bool) -> ()) {
-        URLSession.shared.downloadTask(with: post.urlMedia, completionHandler: { (location, response, error) -> Void in
-            guard let location = location, error == nil else { return }
-            do {
-                try FileManager.default.moveItem(at: location, to: localPathUrl)
-                post.pathMedia = localPathUrl
-                completion(true)
-            } catch let error as NSError {
-                print(error.localizedDescription)
-                completion(false)
-            }
-        }).resume()
-    }
-    
-    fileprivate func audioAlreadyDownloaded(_ localPathUrl: URL) -> Bool {
-        return FileManager.default.fileExists(atPath: localPathUrl.path)
-    }
+    //MARK:- Actions
     
     @objc func tapDownloadOrPlay(sender: UIButton)  {
         let row = sender.tag
         let indexPath = IndexPath(item: row, section: 0)
         let post = posts[row]
-        let localPathUrl = getLocalPath(post.urlMedia)
-        if audioAlreadyDownloaded(localPathUrl) {
+        let localPathUrl = storageController.getLocalPath(post.urlMedia)
+        if storageController.audioAlreadyDownloaded(localPathUrl) {
             audioPlayerController.play(posts, indexPath) { (rowsToReload) in
                 print(rowsToReload.count)
                 self.tableView.reloadRows(at: rowsToReload, with: .none)
@@ -141,7 +119,7 @@ class PodcastTableViewController: UITableViewController {
         } else {
             post.downloadStatus = .downloading
             tableView.reloadRows(at: [indexPath], with: .none)
-            executeDownload(post, localPathUrl, completion: { (success) in
+            storageController.executeDownload(post, localPathUrl, completion: { (success) in
                 DispatchQueue.main.async {
                     post.downloadStatus = (success) ? .completed : .none
                     self.tableView.reloadRows(at: [indexPath], with: .none)

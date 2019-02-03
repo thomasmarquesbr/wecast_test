@@ -21,6 +21,7 @@
 		E923106B2205E83800485234 /* PlayerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E923106A2205E83800485234 /* PlayerViewController.swift */; };
 		E9F540402207634E005F10AE /* UIButtonExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9F5403F2207634E005F10AE /* UIButtonExtension.swift */; };
 		E9F540422207641D005F10AE /* AudioPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9F540412207641D005F10AE /* AudioPlayerController.swift */; };
+		E9F54044220781FD005F10AE /* StorageController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9F54043220781FD005F10AE /* StorageController.swift */; };
 		FF52E9A2B5E90A2DFC87E15D /* Pods_wecast_player.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AAB22A4E2C89E99912F5270B /* Pods_wecast_player.framework */; };
 /* End PBXBuildFile section */
 
@@ -69,6 +70,7 @@
 		E923106A2205E83800485234 /* PlayerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewController.swift; sourceTree = "<group>"; };
 		E9F5403F2207634E005F10AE /* UIButtonExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIButtonExtension.swift; sourceTree = "<group>"; };
 		E9F540412207641D005F10AE /* AudioPlayerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayerController.swift; sourceTree = "<group>"; };
+		E9F54043220781FD005F10AE /* StorageController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -199,6 +201,7 @@
 				E92310602205344700485234 /* PodcastTableViewController.swift */,
 				E923106A2205E83800485234 /* PlayerViewController.swift */,
 				E9F540412207641D005F10AE /* AudioPlayerController.swift */,
+				E9F54043220781FD005F10AE /* StorageController.swift */,
 			);
 			path = controller;
 			sourceTree = "<group>";
@@ -458,6 +461,7 @@
 				E92310612205344700485234 /* PodcastTableViewController.swift in Sources */,
 				E923102F2204FE5D00485234 /* AppDelegate.swift in Sources */,
 				E92310642205350800485234 /* Post.swift in Sources */,
+				E9F54044220781FD005F10AE /* StorageController.swift in Sources */,
 				E92310672205389B00485234 /* PostCell.swift in Sources */,
 				E923106B2205E83800485234 /* PlayerViewController.swift in Sources */,
 				E9F540422207641D005F10AE /* AudioPlayerController.swift in Sources */,
