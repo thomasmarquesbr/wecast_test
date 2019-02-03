@@ -28,15 +28,16 @@ class AudioPlayerController {
     func play(_ posts: [Post], _ indexPath: IndexPath, completion: @escaping([IndexPath])->()) {
         let post = posts[indexPath.row]
         var rowsToReload = [indexPath]
+    
         if let player = player, player.url?.absoluteURL == post.pathMedia?.absoluteURL {
-            
+ 
             if player.isPlaying {
                 player.pause()
                 post.isPlaying = false
             } else {
                 player.play()
                 post.isPlaying = true
-                
+ 
                 if let indexPathLastPlayed = prepareLastPlayed(post, posts) {
                     rowsToReload.append(indexPathLastPlayed)
                 }

@@ -8,22 +8,21 @@
 
 import UIKit
 import FeedKit
-import Kingfisher
-import AVFoundation
-import NVActivityIndicatorView
 
 class PodcastTableViewController: UITableViewController {
     
-//    var player: AVAudioPlayer?
     var storageController = StorageController()
     var audioPlayerController = AudioPlayerController()
+    let searchController = UISearchController(searchResultsController: nil)
     let feedURL = URL(string: "http://feeds.feedburner.com/podcastmrg")!
     let dateFormatter = DateFormatter()
     var thumbFeedURL = ""
     var posts = [Post]()
+    var filteredPosts = [Post]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        initSearchController()
         navigationController?.navigationBar.prefersLargeTitles = true
         tableView.separatorStyle = .none
         dateFormatter.dateFormat = "dd-MM-yyyy"
@@ -78,11 +77,15 @@ class PodcastTableViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if isFiltering() {
+            return filteredPosts.count
+        }
         return posts.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let post = posts[indexPath.row]
+//        let post = posts[indexPath.row]
+        let post = (isFiltering()) ? filteredPosts[indexPath.row] : posts[indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: "PostCell") as! PostCell
         cell.config(post, thumbUrl: thumbFeedURL)
         cell.downloadButton.tag = indexPath.row
@@ -97,9 +100,9 @@ class PodcastTableViewController: UITableViewController {
         if segue.identifier == "postSegue", let itemRow = self.tableView.indexPathForSelectedRow?.row {
             let playerViewController = segue.destination as! PlayerViewController
             playerViewController.currentEpisodeIndex = itemRow
-            playerViewController.posts = posts
             playerViewController.urlImage = self.thumbFeedURL
-            playerViewController.episodeTitle = posts[itemRow].title
+            playerViewController.posts = posts
+            playerViewController.episodeTitle = (isFiltering()) ? filteredPosts[itemRow].title : posts[itemRow].title
         }
     }
     
@@ -109,11 +112,11 @@ class PodcastTableViewController: UITableViewController {
     @objc func tapDownloadOrPlay(sender: UIButton)  {
         let row = sender.tag
         let indexPath = IndexPath(item: row, section: 0)
-        let post = posts[row]
+        let post = (isFiltering()) ? filteredPosts[row] : posts[row]
         let localPathUrl = storageController.getLocalPath(post.urlMedia)
         if storageController.audioAlreadyDownloaded(localPathUrl) {
-            audioPlayerController.play(posts, indexPath) { (rowsToReload) in
-                print(rowsToReload.count)
+            let list = (isFiltering()) ? filteredPosts : posts
+            audioPlayerController.play(list, indexPath) { (rowsToReload) in
                 self.tableView.reloadRows(at: rowsToReload, with: .none)
             }
         } else {
@@ -126,6 +129,37 @@ class PodcastTableViewController: UITableViewController {
                 }
             })
         }
+    }
+
+}
+
+extension PodcastTableViewController: UISearchResultsUpdating {
+    
+    func initSearchController() {
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Buscar episódio"
+        navigationItem.searchController = searchController
+        definesPresentationContext = true
+    }
+    
+    func searchBarIsEmpty() -> Bool {
+        return searchController.searchBar.text?.isEmpty ?? true
+    }
+    
+    func filterContentForSearchText(_ searchText: String, scope: String = "All") {
+        filteredPosts = posts.filter({( post: Post) -> Bool in
+            return (post.title.lowercased().contains(searchText.lowercased()))
+        })
+        tableView.reloadData()
+    }
+
+    func updateSearchResults(for searchController: UISearchController) {
+        filterContentForSearchText(searchController.searchBar.text!)
+    }
+    
+    func isFiltering() -> Bool {
+        return searchController.isActive && !searchBarIsEmpty()
     }
     
 }
