@@ -10,6 +10,8 @@ target 'wecast_player' do
    pod 'FeedKit', '~> 8.0'
    pod 'Kingfisher', '~> 5.0'
    pod 'NVActivityIndicatorView/AppExtension'
+   pod 'TransitionTreasury', '~> 6.0'
+   pod 'TransitionAnimation', '~> 6.0'
 
   target 'wecast_playerTests' do
     inherit! :search_paths

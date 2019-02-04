@@ -8,8 +8,12 @@
 
 import UIKit
 import FeedKit
+import TransitionTreasury
+import TransitionAnimation
 
-class PodcastTableViewController: UITableViewController {
+class PodcastTableViewController: UITableViewController, ModalTransitionDelegate {
+    
+    var tr_presentTransition: TRViewControllerTransitionDelegate?
     
     var storageController = StorageController()
     var audioPlayerController = AudioPlayerController()
@@ -23,7 +27,8 @@ class PodcastTableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         initSearchController()
-        navigationController?.navigationBar.prefersLargeTitles = true
+//        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationController?.isNavigationBarHidden = true
         tableView.separatorStyle = .none
         dateFormatter.dateFormat = "dd-MM-yyyy"
         getFeedRSS()
@@ -96,24 +101,51 @@ class PodcastTableViewController: UITableViewController {
         return cell
     }
     
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        let row = indexPath.row
+        let post = (isFiltering()) ? filteredPosts[row] : posts[row]
+        
+        guard let cell = tableView.cellForRow(at: indexPath) as? PostCell else { return }
+        let playerViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "playerViewController") as! PlayerViewController
+        playerViewController.backTitle = self.title
+        playerViewController.currentEpisodeIndex = (isFiltering()) ? getIndexOf(filteredPosts[row], inList: posts)! : row
+        playerViewController.audioPlayerController = audioPlayerController
+        playerViewController.urlImage = self.thumbFeedURL
+        playerViewController.posts = posts
+        playerViewController.currentEpisode = post
+        audioPlayerController.play(post: post) { (listToUpdate) in
+            let rows = self.rowsToUpdate(list: listToUpdate)
+            self.tableView.reloadRows(at: rows, with: .none)
+        }
+        
+        guard let logoImageView = cell.thumb else { return }
+//        var logoImageView = UIImageView().kf.setImage(with: URL(fileURLWithPath: thumbFeedURL))
+        let paramGcRect = CGRect(x: 20, y: 210, width: 374, height: 374)
+        navigationController?.tr_pushViewController(playerViewController,
+                                                    method: TRPushTransitionMethod.blixt(keyView: logoImageView, to: paramGcRect),
+                                                    statusBarStyle: .lightContent,
+                                                    completion: {})
+    }
+    
     
     //MARK:- Navigation
     
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "postSegue", let itemRow = self.tableView.indexPathForSelectedRow?.row {
-            let playerViewController = segue.destination as! PlayerViewController
-            playerViewController.currentEpisodeIndex = itemRow
-            playerViewController.audioPlayerController = audioPlayerController
-            playerViewController.urlImage = self.thumbFeedURL
-            playerViewController.posts = posts
-            let episode = (isFiltering()) ? filteredPosts[itemRow] : posts[itemRow]
-            playerViewController.currentEpisode = episode
-            audioPlayerController.play(post: episode) { (listToUpdate) in
-                let rows = self.rowsToUpdate(list: listToUpdate)
-                self.tableView.reloadRows(at: rows, with: .none)
-            }
-        }
-    }
+//    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+//        if segue.identifier == "postSegue", let itemRow = self.tableView.indexPathForSelectedRow?.row {
+//            let playerViewController = segue.destination as! PlayerViewController
+//            playerViewController.currentEpisodeIndex = itemRow
+//            playerViewController.audioPlayerController = audioPlayerController
+//            playerViewController.urlImage = self.thumbFeedURL
+//            playerViewController.posts = posts
+//            let episode = (isFiltering()) ? filteredPosts[itemRow] : posts[itemRow]
+//            playerViewController.currentEpisode = episode
+//            audioPlayerController.play(post: episode) { (listToUpdate) in
+//                let rows = self.rowsToUpdate(list: listToUpdate)
+//                self.tableView.reloadRows(at: rows, with: .none)
+//            }
+//        }
+//    }
     
     
     //MARK:- Actions
@@ -121,9 +153,8 @@ class PodcastTableViewController: UITableViewController {
     func rowsToUpdate(list: [Post]) -> [IndexPath] {
         var rows = [IndexPath]()
         posts.forEach { (post) in
-            if let index = posts.firstIndex(where: { $0.title == post.title}) {
-                let indexPath = IndexPath(row: index, section: 0)
-                rows.append(indexPath)
+            if let index = getIndexOf(post, inList: posts) {
+                rows.append(IndexPath(row: index, section: 0))
             }
         }
         return rows

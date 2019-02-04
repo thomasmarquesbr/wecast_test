@@ -9,15 +9,19 @@
 import UIKit
 import AVFoundation
 import Kingfisher
+import TransitionTreasury
+import TransitionAnimation
 
-class PlayerViewController: UIViewController {
+class PlayerViewController: UIViewController, NavgationTransitionable {
     
+    var tr_pushTransition: TRNavgationTransitionDelegate?
     var audioPlayerController: AudioPlayerController?
     var currentEpisodeIndex = 0
     var currentEpisode: Post?
     var posts = [Post]()
     var urlImage: String?
     var timer: Timer?
+    var backTitle: String?
     
     @IBOutlet var rewindButton: UIButton!
     @IBOutlet var playButton: UIButton!
@@ -26,12 +30,24 @@ class PlayerViewController: UIViewController {
     @IBOutlet var imageView: UIImageView!
     @IBOutlet var titleLabel: UILabel!
     
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationController?.navigationBar.prefersLargeTitles = false
+        configNavigationBar()
         initComponentViews()
     }
+    
+    fileprivate func configNavigationBar() {
+        let navigationBar = UINavigationBar(frame: CGRect(x: 0, y: statusBarHeight(), width: self.view.frame.width, height: 50))
+        navigationBar.setBackgroundImage(UIImage(), for: UIBarMetrics.default)
+        navigationBar.shadowImage = UIImage()
+        view.addSubview(navigationBar)
+        
+        let backButton = UIBarButtonItem(title: backTitle, style: .done, target: self, action: #selector(didTapBackNavigation))
+        let navigationItem = UINavigationItem(title: "")
+        navigationItem.leftBarButtonItem = backButton
+        navigationBar.items = [navigationItem]
+    }
+    
     
     fileprivate func initComponentViews() {
         updateComponentViews()
@@ -126,5 +142,10 @@ class PlayerViewController: UIViewController {
         updateComponentViews()
     }
     
+    @objc func didTapBackNavigation() {
+        _ = navigationController?.tr_popViewController({ () -> Void in
+            print("Pop finished.")
+        })
+    }
     
 }
