@@ -10,78 +10,15 @@ import UIKit
 import AVFoundation
 
 class AudioPlayerController {
+   
+    fileprivate var avPlayer: AVPlayer?
+    fileprivate var avPlayerItem: AVPlayerItem?
+    fileprivate var currentPost: Post?
+    fileprivate var lastPost: Post?
+    fileprivate var currentTime = CMTime(value: 0, timescale: 1)
+    fileprivate var zeroTime = CMTime(value: 0, timescale: 1)
     
-    var player: AVAudioPlayer?
-    var lastPlayed: Post?
-    
-    func prepareLastPlayed(_ post: Post, _ posts: [Post]) -> IndexPath? {
-        lastPlayed?.isPlaying = false
-        var indexPathLastPlayed: IndexPath?
-        if let lastPlayed = lastPlayed, let indexLastPost = posts.firstIndex(where: {
-            $0.title == lastPlayed.title }) {
-            indexPathLastPlayed = IndexPath(row: indexLastPost, section: 0)
-        }
-        lastPlayed = post
-        return indexPathLastPlayed
-    }
-    
-    func play(_ posts: [Post], _ indexPath: IndexPath, completion: @escaping([IndexPath])->()) {
-        let post = posts[indexPath.row]
-        var rowsToReload = [indexPath]
-    
-        if let player = player, player.url?.absoluteURL == post.pathMedia?.absoluteURL {
- 
-            if player.isPlaying {
-                player.pause()
-                post.isPlaying = false
-            } else {
-                player.play()
-                post.isPlaying = true
- 
-                if let indexPathLastPlayed = prepareLastPlayed(post, posts) {
-                    rowsToReload.append(indexPathLastPlayed)
-                }
-            }
-            completion(rowsToReload)
-            
-        } else {
-            
-            do {
-                guard let pathMedia = post.pathMedia else { return }
-                player = try AVAudioPlayer(contentsOf: pathMedia)
-                player?.prepareToPlay()
-                player?.volume = 1.0
-                player?.play()
-                post.isPlaying = true
-                
-                if let indexPathLastPlayed = prepareLastPlayed(post, posts) {
-                    rowsToReload.append(indexPathLastPlayed)
-                }
-                
-                completion(rowsToReload)
-
-            } catch let error as NSError {
-                print("playing error: \(error.localizedDescription)")
-            } catch {
-                print("AVAudioPlayer init failed")
-            }
-            
-        }
-    }
-    
-    
-    
-    
-    
-    
-    var avPlayer: AVPlayer?
-    var avPlayerItem: AVPlayerItem?
-    var currentPost: Post?
-    var lastPost: Post?
-    var currentTime = CMTime(value: 0, timescale: 1)
-    var zeroTime = CMTime(value: 0, timescale: 1)
-    
-    func preparePlayer(urlOrPathMedia: URL) {
+    fileprivate func preparePlayer(urlOrPathMedia: URL) {
         avPlayerItem = AVPlayerItem(url: urlOrPathMedia)
         avPlayer = AVPlayer(playerItem: avPlayerItem)
         
@@ -122,12 +59,42 @@ class AudioPlayerController {
         completion(listToUpdate)
     }
     
+    func pause() {
+        currentTime = avPlayerItem?.currentTime() ?? zeroTime
+        avPlayer?.pause()
+    }
+    
+    func seekToAndPlay(value: Float64) {
+        let timeToSeek = CMTimeMakeWithSeconds(value, preferredTimescale: 1)
+        avPlayer?.seek(to: timeToSeek)
+        avPlayer?.play()
+    }
+    
     func isPlaying() -> Bool {
         return !(avPlayer?.rate == 0 || avPlayer == nil)
     }
     
+    func isPlaying(_ post: Post) -> Bool {
+        return lastPost?.title == post.title
+    }
     
+    func addObserver(_ observer: NSObject, forKeyPath: String, options: NSKeyValueObservingOptions, context: UnsafeMutableRawPointer?) {
+        avPlayerItem?.addObserver(observer, forKeyPath: forKeyPath, options: options, context: context)
+    }
     
+    func addObserverOfCurrentItemToNotificationCenter(_ observer: Any, selector: Selector, name: NSNotification.Name?) {
+        NotificationCenter.default.addObserver(observer, selector: selector, name: name, object: avPlayer?.currentItem)
+    }
     
+    func getDuration() -> Float? {
+        guard let playerItem = avPlayer?.currentItem else { return nil }
+        let duration = Float(CMTimeGetSeconds(playerItem.duration))
+        return (duration.isNaN) ? nil : duration
+    }
+    
+    func getCurrentTime() -> Float? {
+        guard let currentItem = avPlayer?.currentItem else { return nil }
+        return Float(currentItem.currentTime().seconds)
+    }
     
 }

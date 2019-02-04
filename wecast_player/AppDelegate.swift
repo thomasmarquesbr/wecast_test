@@ -14,8 +14,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        let font = UIFont.init(name: "ChalkboardSE-Light", size: 17)
+        UILabel.appearance().font = font
+        UINavigationBar.appearance().tintColor = UIColor.gray
+        UINavigationBar.appearance().titleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.red]
+        UINavigationBar.appearance().titleTextAttributes = [
+                NSAttributedString.Key.font: font!,
+                NSAttributedString.Key.foregroundColor: UIColor.gray
+        ]
+        if #available(iOS 11.0, *) {
+            UINavigationBar.appearance().largeTitleTextAttributes = [
+                NSAttributedString.Key.foregroundColor: Color.forText,
+                NSAttributedString.Key.font: font!.withSize(32),
+            ]
+        }
+        UINavigationBar.appearance().setBackgroundImage(UIImage(), for: .default)
+        UINavigationBar.appearance().shadowImage = UIImage()
+        UINavigationBar.appearance().isTranslucent = false
+        UIBarButtonItem.appearance().setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.gray], for: .normal)
         
         // enable playback on App
         do {

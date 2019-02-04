@@ -7,14 +7,11 @@
 //
 
 import UIKit
-import AVFoundation
+import AVFoundation.AVPlayerItem
 import Kingfisher
-import TransitionTreasury
-import TransitionAnimation
 
-class PlayerViewController: UIViewController, NavgationTransitionable {
-    
-    var tr_pushTransition: TRNavgationTransitionDelegate?
+class PlayerViewController: UIViewController {
+
     var audioPlayerController: AudioPlayerController?
     var currentEpisodeIndex = 0
     var currentEpisode: Post?
@@ -36,35 +33,35 @@ class PlayerViewController: UIViewController, NavgationTransitionable {
         initComponentViews()
     }
     
+    
     fileprivate func configNavigationBar() {
-        let navigationBar = UINavigationBar(frame: CGRect(x: 0, y: statusBarHeight(), width: self.view.frame.width, height: 50))
-        navigationBar.setBackgroundImage(UIImage(), for: UIBarMetrics.default)
-        navigationBar.shadowImage = UIImage()
-        view.addSubview(navigationBar)
-        
-        let backButton = UIBarButtonItem(title: backTitle, style: .done, target: self, action: #selector(didTapBackNavigation))
-        let navigationItem = UINavigationItem(title: "")
-        navigationItem.leftBarButtonItem = backButton
-        navigationBar.items = [navigationItem]
+        navigationController?.navigationBar.prefersLargeTitles = false
+        navigationController?.view.backgroundColor = UIColor.white
     }
     
-    
     fileprivate func initComponentViews() {
+        timelineSlider.thumbImage(for: )
         updateComponentViews()
         guard let audioPlayerController = audioPlayerController else { return }
-        audioPlayerController.avPlayerItem?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
+        
+        audioPlayerController.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
+    
         if audioPlayerController.isPlaying() {
             playButton.setImage(UIImage(named: "pause"), for: .normal)
-            NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying),
-                                                   name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: audioPlayerController.avPlayer?.currentItem)
+            audioPlayerController.addObserverOfCurrentItemToNotificationCenter(self,
+                                                                               selector: #selector(playerDidFinishPlaying),
+                                                                               name: NSNotification.Name.AVPlayerItemDidPlayToEndTime)
         }
     }
     
     fileprivate func updateComponentViews() {
         if let urlImage = self.urlImage {
             imageView.kf.setImage(with: URL(string: urlImage))
+            imageView.alpha = 0.95
         }
         titleLabel.text = currentEpisode?.title
+        titleLabel.font = UIFont(name: "ChalkboardSE-Bold", size: 25.0)
+        titleLabel.textColor = Color.forText
         if let index = posts.firstIndex(where: { $0.title == currentEpisode?.title }) {
             currentEpisodeIndex = index
         }
@@ -72,12 +69,9 @@ class PlayerViewController: UIViewController, NavgationTransitionable {
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         if object is AVPlayerItem, keyPath == "playbackLikelyToKeepUp" {
-            guard let playerItem = audioPlayerController?.avPlayer?.currentItem else { return }
-            let maxVal = Float(CMTimeGetSeconds(playerItem.duration))
-            if !maxVal.isNaN {
-                timelineSlider.maximumValue = Float(CMTimeGetSeconds(playerItem.duration))
-                timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(updateSlider), userInfo: nil, repeats: true)
-            }
+            guard let duration = audioPlayerController?.getDuration() else { return }
+            timelineSlider.maximumValue = duration
+            timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(updateSlider), userInfo: nil, repeats: true)
         }
     }
     
@@ -97,8 +91,9 @@ class PlayerViewController: UIViewController, NavgationTransitionable {
         var img = "pause"
         if audioPlayerController.isPlaying() {
             img = "play"
-            NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying),
-                                                   name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: audioPlayerController.avPlayer?.currentItem)
+            audioPlayerController.addObserverOfCurrentItemToNotificationCenter(self,
+                                                                               selector: #selector(playerDidFinishPlaying),
+                                                                               name: NSNotification.Name.AVPlayerItemDidPlayToEndTime)
         }
         playButton.setImage(UIImage(named: img), for: .normal)
         let episode = posts[currentEpisodeIndex]
@@ -114,23 +109,31 @@ class PlayerViewController: UIViewController, NavgationTransitionable {
     }
     
     @IBAction func changeAudioTime(_ sender: Any) {
-        audioPlayerController?.avPlayer?.pause()
+        audioPlayerController?.pause()
         guard let sliderValue = Float64(exactly: timelineSlider.value) else { return }
-        let timeToSeek = CMTimeMakeWithSeconds(sliderValue, preferredTimescale: 1)
-        audioPlayerController?.avPlayer?.seek(to: timeToSeek)
-        audioPlayerController?.avPlayer?.play()
-        guard let audioPlayerController = audioPlayerController else { return }
-        audioPlayerController.avPlayerItem?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
+        audioPlayerController?.seekToAndPlay(value: sliderValue)
+        audioPlayerController?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
+    }
+    
+    @IBAction func didBackStep10(_ sender: Any) {
+        guard let currentTime = audioPlayerController?.getCurrentTime() else { return }
+        guard let value = Float64(exactly: currentTime - 10) else { return }
+        audioPlayerController?.seekToAndPlay(value: value)
+    }
+    
+    @IBAction func didFoward30(_ sender: Any) {
+        guard let currentTime = audioPlayerController?.getCurrentTime() else { return }
+        guard let value = Float64(exactly: currentTime + 30) else { return }
+        audioPlayerController?.seekToAndPlay(value: value)
     }
     
     
     //MARK:- Selector
     
     @objc func updateSlider() {
-        guard let currentItem = audioPlayerController?.avPlayer?.currentItem else { return }
-        let valueSlider = Float(currentItem.currentTime().seconds)
-        if valueSlider <= timelineSlider.maximumValue {
-            timelineSlider.value = valueSlider
+        guard let currentTime = audioPlayerController?.getCurrentTime() else { return }
+        if currentTime <= timelineSlider.maximumValue {
+            timelineSlider.value = currentTime
         }
     }
     
@@ -140,12 +143,6 @@ class PlayerViewController: UIViewController, NavgationTransitionable {
         audioPlayerController?.play(post: episode, completion: { _ in })
         currentEpisode = episode
         updateComponentViews()
-    }
-    
-    @objc func didTapBackNavigation() {
-        _ = navigationController?.tr_popViewController({ () -> Void in
-            print("Pop finished.")
-        })
     }
     
 }

@@ -8,40 +8,41 @@
 
 import UIKit
 import FeedKit
-import TransitionTreasury
-import TransitionAnimation
 
-class PodcastTableViewController: UITableViewController, ModalTransitionDelegate {
-    
-    var tr_presentTransition: TRViewControllerTransitionDelegate?
+class PodcastTableViewController: UITableViewController {
     
     var storageController = StorageController()
     var audioPlayerController = AudioPlayerController()
     let searchController = UISearchController(searchResultsController: nil)
     let feedURL = URL(string: "http://feeds.feedburner.com/podcastmrg")!
-    let dateFormatter = DateFormatter()
     var thumbFeedURL = ""
     var posts = [Post]()
     var filteredPosts = [Post]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationController?.view.backgroundColor = UIColor.white
         initSearchController()
-//        navigationController?.navigationBar.prefersLargeTitles = true
-        navigationController?.isNavigationBarHidden = true
         tableView.separatorStyle = .none
-        dateFormatter.dateFormat = "dd-MM-yyyy"
         getFeedRSS()
-        print("viewDidLoad")
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         tableView.reloadData()
     }
-    
+
     
     //MARK:- List Functions
+    
+    fileprivate func getPost(index: Int) -> Post {
+        return (isFiltering()) ? filteredPosts[index] : posts[index]
+    }
+    
+    fileprivate func getPosts() -> [Post] {
+        return (isFiltering()) ? filteredPosts : posts
+    }
     
     fileprivate func populateListPosts(_ feed: RSSFeed) {
         for item in feed.items! {
@@ -85,15 +86,11 @@ class PodcastTableViewController: UITableViewController, ModalTransitionDelegate
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if isFiltering() {
-            return filteredPosts.count
-        }
-        return posts.count
+        return getPosts().count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-//        let post = posts[indexPath.row]
-        let post = (isFiltering()) ? filteredPosts[indexPath.row] : posts[indexPath.row]
+        let post = getPost(index: indexPath.row)
         let cell = tableView.dequeueReusableCell(withIdentifier: "PostCell") as! PostCell
         cell.config(post, thumbUrl: thumbFeedURL)
         cell.downloadButton.tag = indexPath.row
@@ -101,59 +98,36 @@ class PodcastTableViewController: UITableViewController, ModalTransitionDelegate
         return cell
     }
     
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        let row = indexPath.row
-        let post = (isFiltering()) ? filteredPosts[row] : posts[row]
-        
-        guard let cell = tableView.cellForRow(at: indexPath) as? PostCell else { return }
-        let playerViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "playerViewController") as! PlayerViewController
-        playerViewController.backTitle = self.title
-        playerViewController.currentEpisodeIndex = (isFiltering()) ? getIndexOf(filteredPosts[row], inList: posts)! : row
-        playerViewController.audioPlayerController = audioPlayerController
-        playerViewController.urlImage = self.thumbFeedURL
-        playerViewController.posts = posts
-        playerViewController.currentEpisode = post
-        audioPlayerController.play(post: post) { (listToUpdate) in
-            let rows = self.rowsToUpdate(list: listToUpdate)
-            self.tableView.reloadRows(at: rows, with: .none)
-        }
-        
-        guard let logoImageView = cell.thumb else { return }
-//        var logoImageView = UIImageView().kf.setImage(with: URL(fileURLWithPath: thumbFeedURL))
-        let paramGcRect = CGRect(x: 20, y: 210, width: 374, height: 374)
-        navigationController?.tr_pushViewController(playerViewController,
-                                                    method: TRPushTransitionMethod.blixt(keyView: logoImageView, to: paramGcRect),
-                                                    statusBarStyle: .lightContent,
-                                                    completion: {})
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 130
     }
-    
     
     //MARK:- Navigation
     
-//    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-//        if segue.identifier == "postSegue", let itemRow = self.tableView.indexPathForSelectedRow?.row {
-//            let playerViewController = segue.destination as! PlayerViewController
-//            playerViewController.currentEpisodeIndex = itemRow
-//            playerViewController.audioPlayerController = audioPlayerController
-//            playerViewController.urlImage = self.thumbFeedURL
-//            playerViewController.posts = posts
-//            let episode = (isFiltering()) ? filteredPosts[itemRow] : posts[itemRow]
-//            playerViewController.currentEpisode = episode
-//            audioPlayerController.play(post: episode) { (listToUpdate) in
-//                let rows = self.rowsToUpdate(list: listToUpdate)
-//                self.tableView.reloadRows(at: rows, with: .none)
-//            }
-//        }
-//    }
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "postSegue", let row = self.tableView.indexPathForSelectedRow?.row {
+            let playerViewController = segue.destination as! PlayerViewController
+            let post = getPost(index: row)
+            playerViewController.audioPlayerController = audioPlayerController
+            playerViewController.urlImage = self.thumbFeedURL
+            playerViewController.posts = posts
+            playerViewController.currentEpisode = post
+            if !audioPlayerController.isPlaying() || !audioPlayerController.isPlaying(post) {
+                audioPlayerController.play(post: post) { (listToUpdate) in
+                    let rows = self.rowsToUpdate(list: listToUpdate)
+                    self.tableView.reloadRows(at: rows, with: .none)
+                }
+            }
+        }
+    }
     
     
     //MARK:- Actions
     
     func rowsToUpdate(list: [Post]) -> [IndexPath] {
         var rows = [IndexPath]()
-        posts.forEach { (post) in
-            if let index = getIndexOf(post, inList: posts) {
+        getPosts().forEach { (post) in
+            if let index = getIndexOf(post, inList: getPosts()) {
                 rows.append(IndexPath(row: index, section: 0))
             }
         }
@@ -163,15 +137,10 @@ class PodcastTableViewController: UITableViewController, ModalTransitionDelegate
     @objc func tapDownloadOrPlay(sender: UIButton)  {
         let row = sender.tag
         let indexPath = IndexPath(item: row, section: 0)
-        let post = (isFiltering()) ? filteredPosts[row] : posts[row]
+        let post = getPost(index: row)
         let localPathUrl = storageController.getLocalPath(post.urlMedia)
         if storageController.audioAlreadyDownloaded(localPathUrl) {
-            let list = (isFiltering()) ? filteredPosts : posts
-//            audioPlayerController.play(list, indexPath) { (rowsToReload) in
-//                self.tableView.reloadRows(at: rowsToReload, with: .none)
-//            }
-            
-            audioPlayerController.play(post: list[row]) { (listToUpdate) in
+            audioPlayerController.play(post: getPost(index: row)) { (listToUpdate) in
                 let rows = self.rowsToUpdate(list: listToUpdate)
                 self.tableView.reloadRows(at: rows, with: .none)
             }
@@ -186,7 +155,6 @@ class PodcastTableViewController: UITableViewController, ModalTransitionDelegate
             })
         }
     }
-
 }
 
 extension PodcastTableViewController: UISearchResultsUpdating {

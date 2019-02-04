@@ -15,7 +15,6 @@ extension UIButton {
         if show {
             self.isEnabled = false
             self.alpha = 0.5
-            //            let indicator = UIActivityIndicatorView()
             self.setImage(nil, for: .normal)
             let color = UIColor(red: CGFloat(65/255.0), green: CGFloat(69/255.0), blue: CGFloat(70/255.0), alpha: 1)
             let indicator = NVActivityIndicatorView(frame: self.frame, type: NVActivityIndicatorType.circleStrokeSpin, color: color, padding: 3.0)
@@ -28,7 +27,6 @@ extension UIButton {
         } else {
             self.isEnabled = true
             self.alpha = 1.0
-            //            if let indicator = self.viewWithTag(tag) as? UIActivityIndicatorView {
             if let indicator = self.viewWithTag(tag) as? NVActivityIndicatorView {
                 indicator.stopAnimating()
                 indicator.removeFromSuperview()
