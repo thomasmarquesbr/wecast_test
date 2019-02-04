@@ -27,11 +27,14 @@ class PodcastTableViewController: UITableViewController {
         tableView.separatorStyle = .none
         dateFormatter.dateFormat = "dd-MM-yyyy"
         getFeedRSS()
+        print("viewDidLoad")
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        tableView.reloadData()
     }
+    
     
     //MARK:- List Functions
     
@@ -100,14 +103,31 @@ class PodcastTableViewController: UITableViewController {
         if segue.identifier == "postSegue", let itemRow = self.tableView.indexPathForSelectedRow?.row {
             let playerViewController = segue.destination as! PlayerViewController
             playerViewController.currentEpisodeIndex = itemRow
+            playerViewController.audioPlayerController = audioPlayerController
             playerViewController.urlImage = self.thumbFeedURL
             playerViewController.posts = posts
-            playerViewController.episodeTitle = (isFiltering()) ? filteredPosts[itemRow].title : posts[itemRow].title
+            let episode = (isFiltering()) ? filteredPosts[itemRow] : posts[itemRow]
+            playerViewController.currentEpisode = episode
+            audioPlayerController.play(post: episode) { (listToUpdate) in
+                let rows = self.rowsToUpdate(list: listToUpdate)
+                self.tableView.reloadRows(at: rows, with: .none)
+            }
         }
     }
     
     
     //MARK:- Actions
+    
+    func rowsToUpdate(list: [Post]) -> [IndexPath] {
+        var rows = [IndexPath]()
+        posts.forEach { (post) in
+            if let index = posts.firstIndex(where: { $0.title == post.title}) {
+                let indexPath = IndexPath(row: index, section: 0)
+                rows.append(indexPath)
+            }
+        }
+        return rows
+    }
     
     @objc func tapDownloadOrPlay(sender: UIButton)  {
         let row = sender.tag
@@ -116,8 +136,13 @@ class PodcastTableViewController: UITableViewController {
         let localPathUrl = storageController.getLocalPath(post.urlMedia)
         if storageController.audioAlreadyDownloaded(localPathUrl) {
             let list = (isFiltering()) ? filteredPosts : posts
-            audioPlayerController.play(list, indexPath) { (rowsToReload) in
-                self.tableView.reloadRows(at: rowsToReload, with: .none)
+//            audioPlayerController.play(list, indexPath) { (rowsToReload) in
+//                self.tableView.reloadRows(at: rowsToReload, with: .none)
+//            }
+            
+            audioPlayerController.play(post: list[row]) { (listToUpdate) in
+                let rows = self.rowsToUpdate(list: listToUpdate)
+                self.tableView.reloadRows(at: rows, with: .none)
             }
         } else {
             post.downloadStatus = .downloading

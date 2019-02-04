@@ -70,4 +70,64 @@ class AudioPlayerController {
     }
     
     
+    
+    
+    
+    
+    var avPlayer: AVPlayer?
+    var avPlayerItem: AVPlayerItem?
+    var currentPost: Post?
+    var lastPost: Post?
+    var currentTime = CMTime(value: 0, timescale: 1)
+    var zeroTime = CMTime(value: 0, timescale: 1)
+    
+    func preparePlayer(urlOrPathMedia: URL) {
+        avPlayerItem = AVPlayerItem(url: urlOrPathMedia)
+        avPlayer = AVPlayer(playerItem: avPlayerItem)
+        
+    }
+    
+    func play(post: Post, completion: @escaping([Post])->()) {
+        var listToUpdate = [Post]()
+        currentPost = post
+        var url = post.urlMedia
+        if let pathMedia = currentPost?.pathMedia, currentPost?.downloadStatus == .completed {
+            url = pathMedia
+        }
+        
+        if lastPost?.title != currentPost?.title { // play new audio
+            avPlayer?.pause()
+            lastPost?.isPlaying = false
+            if let last = lastPost {
+                listToUpdate.append(last)
+            }
+            preparePlayer(urlOrPathMedia: url)
+            avPlayer?.play()
+            currentPost?.isPlaying = true
+            lastPost = currentPost
+        } else if avPlayer?.rate == 0 { // play atual
+            avPlayer?.seek(to: currentTime)
+            avPlayer?.play()
+            currentPost?.isPlaying = true
+            lastPost = currentPost
+        } else { //pause atual
+            currentTime = avPlayerItem?.currentTime() ?? zeroTime
+            avPlayer?.pause()
+            currentPost?.isPlaying = false
+        }
+        
+        if let current = currentPost {
+            listToUpdate.append(current)
+        }
+        completion(listToUpdate)
+    }
+    
+    func isPlaying() -> Bool {
+        return !(avPlayer?.rate == 0 || avPlayer == nil)
+    }
+    
+    
+    
+    
+    
 }
