@@ -2,10 +2,12 @@
   "images" : [
     {
       "idiom" : "universal",
+      "filename" : "pause-circle.png",
       "scale" : "1x"
     },
     {
       "idiom" : "universal",
+      "filename" : "pause-circle-2.png",
       "scale" : "2x"
     },
     {

@@ -9,6 +9,10 @@
 import UIKit
 import FeedKit
 
+enum DownloadStatus {
+    case none, downloading, completed
+}
+
 class Post {
     
     var title: String
@@ -16,6 +20,9 @@ class Post {
     var description: String
     var date: Date
     var urlMedia: URL
+    var pathMedia: URL?
+    var downloadStatus = DownloadStatus.none
+    var isPlaying = false
     
     init?(item: RSSFeedItem) {
         guard let title = item.title else { return nil }

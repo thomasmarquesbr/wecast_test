@@ -7,17 +7,18 @@
 //
 
 import UIKit
-import AVFoundation
+import AVFoundation.AVPlayerItem
+import Kingfisher
 
 class PlayerViewController: UIViewController {
-    
-    var player: AVPlayer?
-    var currentTime = CMTimeMake(value: 0, timescale: 1)
+
+    var audioPlayerController: AudioPlayerController?
     var currentEpisodeIndex = 0
+    var currentEpisode: Post?
     var posts = [Post]()
     var urlImage: String?
-    var episodeTitle: String?
     var timer: Timer?
+    var backTitle: String?
     
     @IBOutlet var rewindButton: UIButton!
     @IBOutlet var playButton: UIButton!
@@ -28,30 +29,49 @@ class PlayerViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        configNavigationBar()
+        initComponentViews()
+    }
+    
+    
+    fileprivate func configNavigationBar() {
         navigationController?.navigationBar.prefersLargeTitles = false
-        if let urlImage = self.urlImage {
-            imageView.kf.setImage(with: URL(string: urlImage))
-        }
-        if let episodeTitle = self.episodeTitle {
-            titleLabel.text = episodeTitle
+        navigationController?.view.backgroundColor = UIColor.white
+    }
+    
+    fileprivate func initComponentViews() {
+        timelineSlider.thumbImage(for: )
+        updateComponentViews()
+        guard let audioPlayerController = audioPlayerController else { return }
+        
+        audioPlayerController.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
+    
+        if audioPlayerController.isPlaying() {
+            playButton.setImage(UIImage(named: "pause"), for: .normal)
+            audioPlayerController.addObserverOfCurrentItemToNotificationCenter(self,
+                                                                               selector: #selector(playerDidFinishPlaying),
+                                                                               name: NSNotification.Name.AVPlayerItemDidPlayToEndTime)
         }
     }
     
-    func prepareNextItemToPlay(_ currentEpisodeIndex: Int = 0) {
-        let mediaUrl = posts[currentEpisodeIndex].urlMedia
-        let playerItem = AVPlayerItem(url: mediaUrl)
-        playerItem.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
-        player = AVPlayer(playerItem: playerItem)
+    fileprivate func updateComponentViews() {
+        if let urlImage = self.urlImage {
+            imageView.kf.setImage(with: URL(string: urlImage))
+            imageView.alpha = 0.95
+        }
+        titleLabel.text = currentEpisode?.title
+        titleLabel.font = UIFont(name: "ChalkboardSE-Bold", size: 25.0)
+        titleLabel.textColor = Color.forText
+        if let index = posts.firstIndex(where: { $0.title == currentEpisode?.title }) {
+            currentEpisodeIndex = index
+        }
     }
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         if object is AVPlayerItem, keyPath == "playbackLikelyToKeepUp" {
-            guard let playerItem = player?.currentItem else { return }
-            let maxVal = Float(CMTimeGetSeconds(playerItem.duration))
-            if !maxVal.isNaN {
-                timelineSlider.maximumValue = Float(CMTimeGetSeconds(playerItem.duration))
-                timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(updateSlider), userInfo: nil, repeats: true)
-            }
+            guard let duration = audioPlayerController?.getDuration() else { return }
+            timelineSlider.maximumValue = duration
+            timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(updateSlider), userInfo: nil, repeats: true)
         }
     }
     
@@ -60,55 +80,69 @@ class PlayerViewController: UIViewController {
     
     @IBAction func didRewind(_ sender: Any) {
         currentEpisodeIndex = (currentEpisodeIndex == 0) ? posts.endIndex - 1 : currentEpisodeIndex - 1
-        prepareNextItemToPlay(currentEpisodeIndex)
-        player?.play()
+        let episode = posts[currentEpisodeIndex]
+        audioPlayerController?.play(post: episode, completion: { _ in })
+        currentEpisode = episode
+        updateComponentViews()
     }
     
     @IBAction func didPlayPause(_ sender: Any) {
-        if player?.rate == 0 || player == nil {
-            playButton.setImage(UIImage(named: "pause"), for: .normal)
-            prepareNextItemToPlay(currentEpisodeIndex)
-            player?.seek(to: currentTime)
-            NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying),
-                                                   name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: player!.currentItem)
-            player?.play()
-        } else {
-            playButton.setImage(UIImage(named: "play"), for: .normal)
-            currentTime = player?.currentTime() ?? CMTimeMake(value: 0, timescale: 1)
-            player?.pause()
+        guard let audioPlayerController = audioPlayerController else { return }
+        var img = "pause"
+        if audioPlayerController.isPlaying() {
+            img = "play"
+            audioPlayerController.addObserverOfCurrentItemToNotificationCenter(self,
+                                                                               selector: #selector(playerDidFinishPlaying),
+                                                                               name: NSNotification.Name.AVPlayerItemDidPlayToEndTime)
         }
+        playButton.setImage(UIImage(named: img), for: .normal)
+        let episode = posts[currentEpisodeIndex]
+        audioPlayerController.play(post: episode, completion: {_ in })
     }
     
     @IBAction func didFoward(_ sender: Any) {
         currentEpisodeIndex = (currentEpisodeIndex == posts.endIndex - 1) ? 0 : currentEpisodeIndex + 1
-        prepareNextItemToPlay(currentEpisodeIndex)
-        player?.play()
+        let episode = posts[currentEpisodeIndex]
+        audioPlayerController?.play(post: episode, completion: { _ in })
+        currentEpisode = episode
+        updateComponentViews()
     }
     
     @IBAction func changeAudioTime(_ sender: Any) {
-        player?.pause()
+        audioPlayerController?.pause()
         guard let sliderValue = Float64(exactly: timelineSlider.value) else { return }
-        let timeToSeek = CMTimeMakeWithSeconds(sliderValue, preferredTimescale: 1)
-        player?.seek(to: timeToSeek)
-        player?.play()
+        audioPlayerController?.seekToAndPlay(value: sliderValue)
+        audioPlayerController?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
+    }
+    
+    @IBAction func didBackStep10(_ sender: Any) {
+        guard let currentTime = audioPlayerController?.getCurrentTime() else { return }
+        guard let value = Float64(exactly: currentTime - 10) else { return }
+        audioPlayerController?.seekToAndPlay(value: value)
+    }
+    
+    @IBAction func didFoward30(_ sender: Any) {
+        guard let currentTime = audioPlayerController?.getCurrentTime() else { return }
+        guard let value = Float64(exactly: currentTime + 30) else { return }
+        audioPlayerController?.seekToAndPlay(value: value)
     }
     
     
     //MARK:- Selector
     
     @objc func updateSlider() {
-        guard let currentItem = player?.currentItem else { return }
-        let valueSlider = Float(currentItem.currentTime().seconds)
-        if valueSlider <= timelineSlider.maximumValue {
-            timelineSlider.value = valueSlider
+        guard let currentTime = audioPlayerController?.getCurrentTime() else { return }
+        if currentTime <= timelineSlider.maximumValue {
+            timelineSlider.value = currentTime
         }
     }
     
     @objc func playerDidFinishPlaying(note: NSNotification) {
         currentEpisodeIndex = (currentEpisodeIndex == posts.endIndex - 1) ? 0 : currentEpisodeIndex + 1
-        prepareNextItemToPlay(currentEpisodeIndex)
-        player?.play()
+        let episode = posts[currentEpisodeIndex]
+        audioPlayerController?.play(post: episode, completion: { _ in })
+        currentEpisode = episode
+        updateComponentViews()
     }
-    
     
 }
